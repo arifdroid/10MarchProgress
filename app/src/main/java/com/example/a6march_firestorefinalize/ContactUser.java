@@ -6,7 +6,6 @@ public class ContactUser {
     private String phone;
 
     public ContactUser() {
-
     }
 
     public String getName() {
