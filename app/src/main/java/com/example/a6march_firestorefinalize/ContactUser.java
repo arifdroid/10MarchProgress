@@ -4,6 +4,15 @@ public class ContactUser {
     private String name;
     private String uid;
     private String phone;
+    private String rating;
+
+    public String getRating() {
+        return rating;
+    }
+
+    public void setRating(String rating) {
+        this.rating = rating;
+    }
 
     public ContactUser() {
     }

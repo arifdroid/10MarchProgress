@@ -1,10 +1,12 @@
 package com.example.a6march_firestorefinalize.listing_firestor_recycler;
 
+import android.content.Intent;
 import android.support.annotation.NonNull;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.RatingBar;
 import android.widget.TextView;
 
 import com.example.a6march_firestorefinalize.ContactUser;
@@ -32,6 +34,8 @@ class ContactUserAdapter extends FirestoreRecyclerAdapter<ContactUser,ContactUse
         holder.textViewNameRef.setText(model.getName());
         holder.textViewPhoneRef.setText(model.getPhone());
         holder.textViewUidRef.setText(model.getUid());
+        int rate = Integer.parseInt(model.getRating());
+        holder.ratingBar.setRating(rate);
 
     }
 
@@ -50,6 +54,7 @@ class ContactUserAdapter extends FirestoreRecyclerAdapter<ContactUser,ContactUse
     public class InsideHolder extends RecyclerView.ViewHolder {
 
         private TextView textViewNameRef, textViewPhoneRef, textViewUidRef;
+        private RatingBar ratingBar;
 
         public InsideHolder(@NonNull View itemView) {
             super(itemView);
@@ -57,6 +62,7 @@ class ContactUserAdapter extends FirestoreRecyclerAdapter<ContactUser,ContactUse
             textViewNameRef = itemView.findViewById(R.id.textViewName);
             textViewPhoneRef = itemView.findViewById(R.id.textViewPhone);
             textViewUidRef = itemView.findViewById(R.id.textViewUid);
+            ratingBar = itemView.findViewById(R.id.ratingID);
 
         }
     }
