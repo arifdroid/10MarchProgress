@@ -147,7 +147,7 @@ public class RegistrationActivity extends AppCompatActivity {
 
                     //extract the company phone, and go to company document from collection,, this
 
-                    //BUT THIS WILL CREATE, we dont want user to create
+                    //BUT THIS WILL CREATE, we dont want user to create,, need to check
 
                     collectionReference.document(company_phone_user_enter).get().addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {
                         @Override
