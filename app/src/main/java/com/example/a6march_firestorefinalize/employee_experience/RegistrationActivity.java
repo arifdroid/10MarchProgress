@@ -3,6 +3,7 @@ package com.example.a6march_firestorefinalize.employee_experience;
 import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
@@ -18,10 +19,19 @@ import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.auth.PhoneAuthCredential;
 import com.google.firebase.auth.PhoneAuthProvider;
 import com.google.firebase.firestore.CollectionReference;
+import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.EventListener;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.FirebaseFirestoreException;
+import com.google.firebase.firestore.Query;
+import com.google.firebase.firestore.QueryDocumentSnapshot;
+import com.google.firebase.firestore.QuerySnapshot;
 
+import java.util.ListIterator;
 import java.util.concurrent.TimeUnit;
+
+import javax.annotation.Nullable;
 
 public class RegistrationActivity extends AppCompatActivity {
 
@@ -75,6 +85,21 @@ public class RegistrationActivity extends AppCompatActivity {
         @Override
         public void onClick(View v) {
 
+            //if receive text, then enter.
+            String name = editText_employee_name.getText().toString();
+            String company_phone = editText_company_phone.getText().toString();
+            String your_number = editText_employee_phone.getText().toString();
+            String codehere = editText_code.getText().toString();
+
+            company_phone_user_enter=company_phone;
+
+            if((name!=null)&&(company_phone!=null)&&(your_number!=null)) {
+
+                checkCredential(codeFirebase_Sent,codehere);
+            }
+
+
+
         }
     });
 
@@ -118,13 +143,23 @@ public class RegistrationActivity extends AppCompatActivity {
         @Override
         public void onCodeSent(String s, PhoneAuthProvider.ForceResendingToken forceResendingToken) {
             super.onCodeSent(s, forceResendingToken);
-      textViewMessageRegistration.setText("code received");
-      codeFirebase_Sent =s;
+
+         //received text verification
+
+          textViewMessageRegistration.setText("code received");
+          codeFirebase_Sent =s;
 
         }
     };
 
 
+    }
+
+    private void checkCredential(String codeFirebase_sent, String codehere) {
+
+            PhoneAuthCredential credential = PhoneAuthProvider.getCredential(codeFirebase_sent,codehere);
+
+            gettingVerification(credential);
     }
 
     private void gettingVerification(PhoneAuthCredential phoneAuthCredential) {
@@ -148,31 +183,103 @@ public class RegistrationActivity extends AppCompatActivity {
                     //extract the company phone, and go to company document from collection,, this
 
                     //BUT THIS WILL CREATE, we dont want user to create,, need to check
+                    //lets just use query?
+                        //final String companyNumber = company_phone_user_enter; ////
 
-                    collectionReference.document(company_phone_user_enter).get().addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {
+                    //5.06pm >> change back to employee number inside company
+
+                    final String currentEmployeeIfExist = user.getPhoneNumber();
+
+                    Query query = collectionReference.whereArrayContains("employee_this_admin",currentEmployeeIfExist);
+
+                    query.get().addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
                         @Override
-                        public void onComplete(@NonNull Task<DocumentSnapshot> task) {
-
+                        public void onComplete(@NonNull Task<QuerySnapshot> task) {
 
                             if(task.isSuccessful()){
 
+                                textViewMessageRegistration.setText("getting admin data..");
 
+                                Log.i("checkk", "exist "+ currentEmployeeIfExist);
+
+                                //this should means, user is registered,verified from admin.
+
+
+
+                                //now we write this user document in another collections.
+
+                                final CollectionReference collectionReference_uid_employee_this =
+                                        FirebaseFirestore.getInstance().collection("employees_to_offices").document(company_phone_user_enter)
+                                        .collection("uid_employee_this");
+
+                                //check whether user exist in document
+
+                                Query query_uid_employee_this = collectionReference_uid_employee_this.whereEqualTo("phone",user.getPhoneNumber());
+
+                                query_uid_employee_this.get().addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
+                                    @Override
+                                    public void onComplete(@NonNull Task<QuerySnapshot> task) {
+
+
+                                        if(task.isSuccessful()){
+                                            //dont add document
+
+                                            textViewMessageRegistration.setText("already registered");
+                                        }else {
+
+                                            //create document for this user
+
+                                            String namehere = editText_employee_name.getText().toString();
+                                            String uidsetuphere_for_score_ref = user.getUid();
+
+                                            collectionReference_uid_employee_this.document(user.getPhoneNumber()).set(new Employee_Details(namehere,user.getPhoneNumber(),uidsetuphere_for_score_ref));
+
+                                             textViewMessageRegistration.setText(namehere+" database created");
+
+                                             Log.i("checkk database","success"+ user.getPhoneNumber());
+                                        }
+                                    }
+                                });
+
+
+
+
+                            userLoggedIn();
 
 
                             }else {
-                                //this either means user enter wrong number, document dont
-                                textViewMessageRegistration.setText("company phone not exist");
+                                Log.i("checkk dont belong", "error "+user.getPhoneNumber());
+                                textViewMessageRegistration.setText("user dont exist anywhere");
+
+                                logOutFromFirebaseAuth();
                             }
+
                         }
                     });
 
 
                 }else {
-                    textViewMessageRegistration.setText("fail verify credential..");
+
+                    //task is not succesful, fail to verify credential
+                    //so we log out user from firebase auth
+
+                    logOutFromFirebaseAuth();
                 }
 
             }
         });
+
+    }
+
+    private void logOutFromFirebaseAuth() {
+
+        FirebaseAuth.getInstance().signOut();
+    }
+
+    private void userLoggedIn() {
+
+    textViewMessageRegistration.setText("you are logged in");
+
 
     }
 
