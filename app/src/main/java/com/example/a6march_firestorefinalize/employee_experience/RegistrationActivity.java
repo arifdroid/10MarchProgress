@@ -10,7 +10,10 @@ import android.widget.EditText;
 import android.widget.TextView;
 
 import com.example.a6march_firestorefinalize.R;
+import com.google.android.gms.tasks.OnCanceledListener;
 import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.FirebaseException;
 import com.google.firebase.auth.AuthResult;
@@ -28,7 +31,11 @@ import com.google.firebase.firestore.Query;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.google.firebase.firestore.QuerySnapshot;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
 import java.util.ListIterator;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import javax.annotation.Nullable;
@@ -52,6 +59,18 @@ public class RegistrationActivity extends AppCompatActivity {
     //fields for entered company uid, phone
     private String company_phone_user_enter;
 
+    //noticing that firestore do not get data instantly, so
+    //it will be awhile before checking customer is already in database or not
+    //so we need to instantiate it always false,
+
+    //3 conditions, 1) always false until we get data >adminsOffices<collection saying it exist.
+                    // if this true , then need to check, got document already or not
+    //              2)  until we get data >employees_to_offices<document>uid_employee_this<collection
+    //              3) revert? always true, else, we create?  TRUE means we assume already exist. just condition change.
+
+   // private boolean userRegistered; //this is always false, user is not registered, until proven otherwise
+
+   // private boolean docExist;   //this is always true, assume if user registered, doc exist, just wait to prove, if otherwise add new doc
 
 
 
@@ -60,8 +79,13 @@ public class RegistrationActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_registration);
 
+        //existiantial crisis
+//        userRegistered=false;
+//        docExist=true;
+
     //edit text input
-    editText_code= findViewById(R.id.editTextCodeID);
+    editText_code= findViewById(R.id.editText_registration_employee_code_ID);
+
     editText_company_phone=findViewById(R.id.editText__registration_companyPhone_ID);
     editText_employee_name = findViewById(R.id.editTextName_registrationID);
     editText_employee_phone = findViewById(R.id.editText_registration_phone_employee_ID);
@@ -168,102 +192,111 @@ public class RegistrationActivity extends AppCompatActivity {
 
         FirebaseAuth.getInstance().signInWithCredential(phoneAuthCredential).addOnCompleteListener(new OnCompleteListener<AuthResult>() {
             @Override
-            public void onComplete(@NonNull Task<AuthResult> task) {
+            public void onComplete(@NonNull final Task<AuthResult> task) {
 
                 if(task.isSuccessful()){
 
+                    Log.i("checkk "," task is successful");
 
+                    //test if user is registered by admin
 
                     final FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
 
-                    //here we want to verify this current user is registered by admin by some office
+                    final CollectionReference collectionReference_adminsOffices = FirebaseFirestore.getInstance().collection("adminsOffices");
 
-                    final CollectionReference collectionReference = FirebaseFirestore.getInstance().collection("adminsOffices");
+                    final Query query = collectionReference_adminsOffices.whereArrayContains("employee_this_admin",user.getPhoneNumber());
 
-                    //extract the company phone, and go to company document from collection,, this
-
-                    //BUT THIS WILL CREATE, we dont want user to create,, need to check
-                    //lets just use query?
-                        //final String companyNumber = company_phone_user_enter; ////
-
-                    //5.06pm >> change back to employee number inside company
-
-                    final String currentEmployeeIfExist = user.getPhoneNumber();
-
-                    Query query = collectionReference.whereArrayContains("employee_this_admin",currentEmployeeIfExist);
-
-                    query.get().addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
+                    query.get().addOnSuccessListener(new OnSuccessListener<QuerySnapshot>() {
                         @Override
-                        public void onComplete(@NonNull Task<QuerySnapshot> task) {
+                        public void onSuccess(QuerySnapshot queryDocumentSnapshots) {
 
-                            if(task.isSuccessful()){
+                            Map<String, Object> map;
+                            int i =0;
+                            int j =0;
 
-                                textViewMessageRegistration.setText("getting admin data..");
+                            ArrayList<String> checkUser = new ArrayList<>();
 
-                                Log.i("checkk", "exist "+ currentEmployeeIfExist);
+                            int size = queryDocumentSnapshots.size();
 
-                                //this should means, user is registered,verified from admin.
+                            Log.i("checkk ", "stop 1");
 
+                            for(QueryDocumentSnapshot documentSnapshot:queryDocumentSnapshots){ //this cycle extract document with query
 
+                                Log.i("checkk ", "stop 2");
 
-                                //now we write this user document in another collections.
+                                map= documentSnapshot.getData(); //every single document consist of hashmap
+                                 j++;
 
-                                final CollectionReference collectionReference_uid_employee_this =
-                                        FirebaseFirestore.getInstance().collection("employees_to_offices").document(company_phone_user_enter)
-                                        .collection("uid_employee_this");
+                                Log.i("checkk test "+j, "document count i think");
 
-                                //check whether user exist in document
-
-                                Query query_uid_employee_this = collectionReference_uid_employee_this.whereEqualTo("phone",user.getPhoneNumber());
-
-                                query_uid_employee_this.get().addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
-                                    @Override
-                                    public void onComplete(@NonNull Task<QuerySnapshot> task) {
+                                for(Map.Entry<String,Object> kk : map.entrySet()){
+                                    i++;
+                                    if(kk.getKey().equals("employee_this_admin")){
 
 
-                                        if(task.isSuccessful()){
-                                            //dont add document
+                                        Log.i("checkk test "+i, "test"+ kk.getValue().toString());
+                                        //this will still return string
+                                        //regex?
+                                        //we dont have to do this, since if document exist, means user is registered, but real question is,
 
-                                            textViewMessageRegistration.setText("already registered");
-                                        }else {
+                                        //where to goes if user not exist, or document no present
 
-                                            //create document for this user
+                                        //if this exist, means user is registered by admin, so we can log in, but
+                                        //before that, need to create document/update
+                                        //so task is always succesfull even number user is not registered.
+//                                        if(kk.getValue().toString().equals(user.getPhoneNumber())) {
+//                                            userLoggedIn();
+//                                        }
 
-                                            String namehere = editText_employee_name.getText().toString();
-                                            String uidsetuphere_for_score_ref = user.getUid();
-
-                                            collectionReference_uid_employee_this.document(user.getPhoneNumber()).set(new Employee_Details(namehere,user.getPhoneNumber(),uidsetuphere_for_score_ref));
-
-                                             textViewMessageRegistration.setText(namehere+" database created");
-
-                                             Log.i("checkk database","success"+ user.getPhoneNumber());
-                                        }
+                                       // checkUser.add(kk.getValue()); //add all collected user
                                     }
-                                });
 
+                                }
 
+                           userLoggedIn();  //we just log in, if user is registered
 
+                            }
 
-                            userLoggedIn();
+                            if(size<1){
 
-
-                            }else {
-                                Log.i("checkk dont belong", "error "+user.getPhoneNumber());
-                                textViewMessageRegistration.setText("user dont exist anywhere");
+                                Log.i("checkk", "no document present?");
 
                                 logOutFromFirebaseAuth();
                             }
+                            //need to check if no data, it will fail or still success
+
+
+                        }
+                    }).addOnFailureListener(new OnFailureListener() {
+                        @Override
+                        public void onFailure(@NonNull Exception e) {
+
+                            logOutFromFirebaseAuth();
+                    Log.i("checkk ","error " + e.getMessage());
+
+                        }
+                    }).addOnCanceledListener(new OnCanceledListener() {
+                        @Override
+                        public void onCanceled() {
+
+                            logOutFromFirebaseAuth();
+
+                            Log.i("checkk ","cancel");
 
                         }
                     });
 
 
-                }else {
 
-                    //task is not succesful, fail to verify credential
-                    //so we log out user from firebase auth
+
+                } else {
+
+                    //user not exist
 
                     logOutFromFirebaseAuth();
+
+                    Log.i("checkk ORIGINAL TASK"," task not successful");
+
                 }
 
             }
@@ -274,11 +307,13 @@ public class RegistrationActivity extends AppCompatActivity {
     private void logOutFromFirebaseAuth() {
 
         FirebaseAuth.getInstance().signOut();
+        Log.i("checkk","logged OUT");
     }
 
     private void userLoggedIn() {
 
     textViewMessageRegistration.setText("you are logged in");
+    Log.i("checkk","logged IN");
 
 
     }

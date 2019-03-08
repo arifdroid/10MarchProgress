@@ -9,9 +9,9 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
-        <activity android:name=".employee_experience.RegistrationActivity"></activity>
+        <activity android:name=".MainActivity"></activity>
         <activity android:name=".listing_firestor_recycler.ListingFireStoreActivity" />
-        <activity android:name=".MainActivity">
+        <activity android:name=".employee_experience.RegistrationActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
