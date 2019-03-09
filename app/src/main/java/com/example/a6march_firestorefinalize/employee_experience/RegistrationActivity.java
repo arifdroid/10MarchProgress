@@ -1,5 +1,6 @@
 package com.example.a6march_firestorefinalize.employee_experience;
 
+import android.content.Intent;
 import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -10,6 +11,7 @@ import android.widget.EditText;
 import android.widget.TextView;
 
 import com.example.a6march_firestorefinalize.R;
+import com.example.a6march_firestorefinalize.active_user.Active_User_Activity;
 import com.google.android.gms.tasks.OnCanceledListener;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnFailureListener;
@@ -43,7 +45,7 @@ import javax.annotation.Nullable;
 public class RegistrationActivity extends AppCompatActivity {
 
     //fields for registration process
-    private Button button_signin, button_getCode;
+    private Button button_signin, button_getCode,button_next;
     private EditText editText_employee_name, editText_employee_phone
             ,editText_company_phone, editText_code;
 
@@ -55,6 +57,8 @@ public class RegistrationActivity extends AppCompatActivity {
 
     //fields for message
     private TextView textViewMessageRegistration;
+
+
 
     //fields for entered company uid, phone
     private String company_phone_user_enter;
@@ -94,6 +98,10 @@ public class RegistrationActivity extends AppCompatActivity {
     button_getCode=findViewById(R.id.button_registration_code_ID);
     button_signin = findViewById(R.id.button_registration_signIn_ID);
 
+    //button test next activity,
+
+    button_next=findViewById(R.id.button_registration_nextID);
+
     //textview message
     textViewMessageRegistration = findViewById(R.id.textView_registration_ID);
     textViewMessageRegistration.setText("...");
@@ -104,6 +112,14 @@ public class RegistrationActivity extends AppCompatActivity {
         if(userInit!=null){
             FirebaseAuth.getInstance().signOut();
         }
+
+    button_next.setOnClickListener(new View.OnClickListener() {
+        @Override
+        public void onClick(View v) {
+            Intent intent = new Intent(RegistrationActivity.this, Active_User_Activity.class);
+            startActivity(intent);
+        }
+    });
 
     button_signin.setOnClickListener(new View.OnClickListener() {
         @Override
