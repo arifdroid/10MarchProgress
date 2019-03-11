@@ -9,8 +9,27 @@ public class FireStoreSQLiteClass {
     private String my_score_ref;
     private String image_url;
 
+    //test
+
+    private float rating;
+
+
     public FireStoreSQLiteClass() {
 
+    }
+
+    public float getRating() {
+        return rating;
+    }
+
+    public void setRating(float rating) {
+        this.rating = rating;
+    }
+
+    public FireStoreSQLiteClass(String name, String my_score_ref, float rating){
+        this.name=name;
+        this.my_score_ref=my_score_ref;
+        this.rating=rating;
     }
 
     public FireStoreSQLiteClass(String name, String phone, String my_score_ref, String image_url) {

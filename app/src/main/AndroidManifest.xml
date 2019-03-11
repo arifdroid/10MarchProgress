@@ -9,14 +9,14 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
-        <activity android:name=".mock_firebaseload_sqlitesave.Write_ScoreCard_Activity"></activity>
+        <activity android:name=".score_your_friend.Score_Friend_Activity"></activity>
         <activity android:name=".employee_experience.RegistrationActivity" />
         <activity
             android:name=".active_user.Active_User_Activity"
             android:label="@string/title_activity_active__user_" />
         <activity android:name=".MainActivity" />
         <activity android:name=".listing_firestor_recycler.ListingFireStoreActivity" />
-        <activity android:name=".score_your_friend.Score_Friend_Activity">
+        <activity android:name=".mock_firebaseload_sqlitesave.Write_ScoreCard_Activity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
